@@ -39,23 +39,23 @@ TEST_F(BitBoardTest, BoardDimensions) {
 }
 
 TEST_F(BitBoardTest, BoardInitStateFalse) {
-    for (uint16_t i = 0; i < WIDTH; i++) {
-        for (uint16_t j = 0; j < HEIGHT; j++) {
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
             ASSERT_FALSE(bitBoard->GetState(i, j));
         }
     }
 }
 
 TEST_F(BitBoardTest, BoardSetState) {
-    for (uint16_t i = 0; i < WIDTH; i++) {
-        for (uint16_t j = 0; j < HEIGHT; j++) {
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
             ASSERT_FALSE(bitBoard->GetState(i, j));
         }
     }
 
     bitBoard->SetState(25, 52, true);
-    for (uint16_t i = 0; i < WIDTH; i++) {
-        for (uint16_t j = 0; j < HEIGHT; j++) {
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
             if (i == 25 && j == 52) {
                 ASSERT_TRUE(bitBoard->GetState(i, j));
             } else {
@@ -65,9 +65,38 @@ TEST_F(BitBoardTest, BoardSetState) {
     }
 
     bitBoard->SetState(25, 52, false);
-    for (uint16_t i = 0; i < WIDTH; i++) {
-        for (uint16_t j = 0; j < HEIGHT; j++) {
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
             ASSERT_FALSE(bitBoard->GetState(i, j));
+        }
+    }
+}
+
+TEST_F(BitBoardTest, CopyAssign) {
+    BitBoard bitBoardTmp(WIDTH, HEIGHT);
+    bitBoard->SetState(25, 52, true);
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
+            if (i == 25 && j == 52) {
+                EXPECT_TRUE(bitBoard->GetState(i, j));
+                EXPECT_FALSE(bitBoardTmp.GetState(i, j));
+            } else {
+                EXPECT_FALSE(bitBoard->GetState(i, j));
+                EXPECT_FALSE(bitBoardTmp.GetState(i, j));
+            }
+        }
+    }
+
+    bitBoardTmp = *bitBoard;
+    for (unsigned int i = 0; i < WIDTH; i++) {
+        for (unsigned int j = 0; j < HEIGHT; j++) {
+            if (i == 25 && j == 52) {
+                EXPECT_TRUE(bitBoard->GetState(i, j));
+                EXPECT_TRUE(bitBoardTmp.GetState(i, j));
+            } else {
+                EXPECT_FALSE(bitBoard->GetState(i, j));
+                EXPECT_FALSE(bitBoardTmp.GetState(i, j));
+            }
         }
     }
 }

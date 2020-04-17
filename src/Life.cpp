@@ -24,12 +24,23 @@
 
 #include <iostream>
 
+#define ALIVE true
+#define DEAD  false
+
+static constexpr unsigned int DELAY = 100;
+
+static constexpr unsigned int WINDOW_WIDTH  = 640;
+static constexpr unsigned int WINDOW_HEIGHT = 640;
+
 class Life {
 public:
     Life(uint16_t width, uint16_t height)
     :   mWidth(width),
         mHeight(height),
-        mBitBoard(width, height)
+        mCellWidth(WINDOW_WIDTH / width),
+        mCellHeight(WINDOW_HEIGHT / height),
+        mBitBoard(width, height),
+        mBitBoardTmp(width, height)
     {
         if(SDL_Init(SDL_INIT_VIDEO) < 0) {
             std::cout << "Failed to initialize the SDL2 library\n";
@@ -39,69 +50,143 @@ public:
             "Life",
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
-            640, 640,
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
             0);
 
         if(!mWindow) {
             std::cout << "Failed to create window\n";
         }
 
-        SDL_Surface *mSurface = SDL_GetWindowSurface(mWindow);
+        mRenderer = SDL_CreateRenderer(mWindow, -1, 0);
 
-        if(!mSurface) {
-            std::cout << "Failed to get the surface from the window\n";
-        }
+        DrawBackground();
+        Init();
     }
 
     ~Life() = default;
 
     void Run() {
-        SDL_Event event;
-
+        unsigned int cycles = 0;
         while (true) {
-            HandleEvents(event);
-            if (!bRun) break;
-
-            UpdateState();
+            cycles++;
+            std::cout << "Cycles: " << cycles << std::endl;
             Draw();
+            SDL_RenderPresent(mRenderer);
 
-            SDL_UpdateWindowSurface(mWindow);
-
-            SDL_Delay(16);
+            HandleEvents();
+            if (!bRun) break;
+            UpdateState();
+            SDL_Delay(DELAY);
         }
+
+        SDL_Quit();
     }
 
 private:
     SDL_Window* mWindow;
-    SDL_Surface* mSurface;
+    SDL_Renderer* mRenderer;
 
     uint16_t mWidth, mHeight;
+    const unsigned int mCellWidth;
+    const unsigned int mCellHeight;
 
     bool bRun = true;
 
     BitBoard mBitBoard;
+    BitBoard mBitBoardTmp;
 
-    void HandleEvents(SDL_Event& event) {
+    void Quit() {
+        bRun = false;
+        std::cout << "QUIT" << std::endl;
+    }
+
+    void HandleEvents() {
+        SDL_Event event;
         SDL_PollEvent(&event);
         switch (event.type) {
             case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    Quit();
+                }
                 break;
 
             case SDL_QUIT:
-                bRun = false;
+                Quit();
         }
+    }
+
+    unsigned int GetNumberOfAliveNeighbours(uint16_t i, uint16_t j) {
+        unsigned int alive = 0;
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                if (mBitBoard.GetState((i+x) % mWidth, (j+y) % mHeight)) {
+                    alive++;
+                }
+            }
+        }
+        return alive;
     }
 
     void UpdateState() {
-
+        mBitBoardTmp = mBitBoard;
+        for (unsigned int i = 0; i < mWidth; i++) {
+            for (unsigned int j = 0; j < mHeight; j++) {
+                unsigned int aliveNeighbours = GetNumberOfAliveNeighbours(i, j);
+                bool state = mBitBoard.GetState(i, j);
+                if (state == DEAD)
+                {
+                    if(aliveNeighbours >= 2 && aliveNeighbours <= 3) {
+                        mBitBoardTmp.SetState(i, j, ALIVE);
+                    }
+                }
+                else if(state == ALIVE)
+                {
+                    if(aliveNeighbours < 2 || aliveNeighbours > 3) {
+                        mBitBoardTmp.SetState(i, j, DEAD);
+                    }
+                }
+            }
+        }
+        mBitBoard = mBitBoardTmp;
     }
 
     void Draw() {
-        for (uint16_t i = 0; i < mWidth; i++) {
-            for (uint16_t j = 0; j < mHeight; j++) {
-
+        DrawBackground();
+        for (unsigned int i = 0; i < mWidth; i++) {
+            for (unsigned int j = 0; j < mHeight; j++) {
+                DrawCell(i, j);
             }
         }
+    }
+
+    void DrawBackground() {
+        SDL_SetRenderDrawColor(mRenderer, 16, 16, 16, 255);
+        SDL_RenderClear(mRenderer);
+    }
+
+    void DrawCell(unsigned int i, unsigned int j) {
+        bool isAlive = mBitBoard.GetState(i, j);
+
+        SDL_Rect rect {
+            static_cast<int>(i * mCellWidth),
+            static_cast<int>(j * mCellHeight),
+            static_cast<int>(mCellWidth - 1),
+            static_cast<int>(mCellHeight - 1)
+        };
+
+        SDL_SetRenderDrawColor(mRenderer, 192, 192, 192, 255);
+        if (isAlive) {
+            SDL_RenderFillRect(mRenderer, &rect);
+        }
+        SDL_SetRenderDrawColor(mRenderer, 64, 64, 64, 255);
+        SDL_RenderDrawRect(mRenderer, &rect);
+    }
+
+    void Init() {
+        //mBitBoard.SetState(10, 10, ALIVE);
+        //mBitBoard.SetState(11, 10, ALIVE);
+        //mBitBoard.SetState(12, 10, ALIVE);
     }
 };
 

@@ -26,15 +26,12 @@ SRC_FILES += $(SRC)/Life.cpp
 all:
 	make life
 	make tests
-	make run-tests
 
 life:
 	$(CXX) $(CXXFLAGS) -lSDL2 -I $(INCLUDE)/ $(SRC_FILES) -o $(BUILD)/$(TARGET)
 
 tests:
 	$(CXX) $(CXXFLAGS) -lgtest -I $(INCLUDE)/ $(TEST_FILES) -o $(BUILD)/$(TEST_TARGET)
-
-run-tests:
 	./$(BUILD)/$(TEST_TARGET)
 
 clean:

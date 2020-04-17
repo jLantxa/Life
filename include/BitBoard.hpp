@@ -21,6 +21,7 @@
 
 #include <cstdint>
 
+class BitBoardTest;
 class BitBoard {
 public:
     BitBoard(uint16_t width, uint16_t height);
@@ -32,6 +33,8 @@ public:
     uint16_t Width() const;
     uint16_t Height() const;
 
+    BitBoard& operator=(BitBoard& bitBoard);
+
 private:
     using Word = uint64_t;
     static constexpr std::size_t WordSize = sizeof(Word);
@@ -39,6 +42,9 @@ private:
     Word* mBoard;
     uint16_t mWidth;
     uint16_t mHeight;
+    uint32_t mNumWords;
+
+    friend class BitBoardTest;
 };
 
 #endif  // _LIFE_INCLUDE_BITBOARD_HPP_

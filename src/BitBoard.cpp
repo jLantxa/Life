@@ -22,10 +22,13 @@
 
 #include <algorithm>
 
-BitBoard::BitBoard(uint16_t width, uint16_t height) : mWidth(width), mHeight(height) {
-    const std::size_t num_words = std::ceil(8.0f * (width * height) / WordSize);
-    mBoard = new Word[num_words];
-    std::fill(mBoard, mBoard + num_words, 0);
+BitBoard::BitBoard(uint16_t width, uint16_t height)
+:   mWidth(width),
+    mHeight(height),
+    mNumWords(std::ceil(8.0f * (width * height) / WordSize))
+{
+    mBoard = new Word[mNumWords];
+    std::fill(mBoard, mBoard + mNumWords, 0);
 }
 
 BitBoard::~BitBoard() {
@@ -58,4 +61,13 @@ void BitBoard::SetState(uint16_t i, uint16_t j, bool state) {
     } else {
         mBoard[word_number] &= ~(static_cast<Word>(1) << word_index);
     }
+}
+
+BitBoard& BitBoard::operator=(BitBoard& other) {
+    std::copy(
+        other.mBoard,
+        other.mBoard + std::min(mNumWords, other.mNumWords),
+        mBoard);
+
+    return *this;
 }
